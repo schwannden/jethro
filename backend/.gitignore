@@ -1,0 +1,14 @@
+__pycache__
+kompose
+data/
+*.pyc
+.idea
+*swp
+*.json
+env
+src/docker-compose*
+src/.env
+*.csv
+*.txt
+app.yaml
+.DS_Store

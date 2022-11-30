@@ -1,0 +1,48 @@
+user_id := `id -u`
+group_id := `id -g`
+current_uid := user_id + ":" + group_id
+set dotenv-load := false
+
+src_root := invocation_directory() + "/jethro"
+
+# default recipe to display help information
+default:
+  @just --list
+
+## -- Project Setup --
+
+# install pip, poetry and dependencies
+install:
+  python -m pip install --upgrade pip
+  pip install poetry
+  poetry env use system
+  poetry install --no-root
+
+## Develop
+
+# Starts services
+deploy:
+    @cd {{src_root}} && GOOGLE_APPLICATION_CREDENTIALS=service-account.json uvicorn main:app --host 0.0.0.0 --port 8888 --reload
+
+# -- Deployment --
+
+# deploy to production
+_configure:
+    cp src/app-${GOOGLE_CLOUD_PROJECT}.yaml src/app.yaml
+
+# deploy to production
+publish: _configure
+    @gcloud --project ${GOOGLE_CLOUD_PROJECT} app deploy src/app.yaml
+
+bumpversion version:
+  bumpversion {{version}}
+
+# linting
+lint:
+    autoflake {{src_root}} -r -i
+    isort {{src_root}}
+    black {{src_root}}
+
+# unit test
+test:
+    pytest --cov {{src_root}} --cov-report=term-missing
